@@ -1,34 +1,49 @@
-// ソース固定マッピングによる一次分類
-// 対応表にあれば即カテゴリ確定、無ければ「未確定」としてAI分類に回す
+{
+  "_comment": "取得元ごとの設定。sourceTagがsourceMapping.jsonのキーと一致している必要がある",
 
-const sourceMapping = require('../config/sourceMapping.json');
+  "rss": [
+    { "sourceTag": "itmedia_aiplus",       "name": "ITmedia AI+",        "url": "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml" },
+    { "sourceTag": "itmedia_news_bursts",  "name": "ITmedia NEWS速報",    "url": "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml" },
+    { "sourceTag": "pc_watch",             "name": "PC Watch",            "url": "https://pc.watch.impress.co.jp/data/rss/1.0/pcw/feed.rdf" },
+    { "sourceTag": "car_watch",            "name": "Car Watch",           "url": "https://car.watch.impress.co.jp/data/rss/1.0/car/feed.rdf" },
+    { "sourceTag": "game_watch",           "name": "GAME Watch",          "url": "https://game.watch.impress.co.jp/data/rss/1.0/gmw/feed.rdf" },
+    { "sourceTag": "internet_watch",       "name": "INTERNET Watch",      "url": "https://internet.watch.impress.co.jp/data/rss/1.0/iw/feed.rdf" },
+    { "sourceTag": "gigazine",             "name": "GIGAZINE",            "url": "https://gigazine.net/news/rss_2.0/" },
+    { "sourceTag": "gizmodo_jp",           "name": "ギズモード・ジャパン", "url": "https://www.gizmodo.jp/feed/index.xml" },
+    { "sourceTag": "36kr",                 "name": "36氪",                "url": "https://36kr.com/feed" }
+  ],
 
-/**
- * 記事配列を「確定済み」と「未確定(AI分類が必要)」に振り分ける
- * @param {Array} articles - [{ id, title, summary, url, sourceTag, publishedAt }]
- * @returns {{ classified: Array, unclassified: Array }}
- */
-function classifyBySource(articles) {
-  const classified = [];
-  const unclassified = [];
+  "googleNewsSections": {
+    "_comment": "hl/gl/ceidを変えることで国・言語別に取得。sectionTopicがsourceMapping.jsonの gnews_xxx に対応",
+    "baseUrl": "https://news.google.com/rss/headlines/section/topic/{TOPIC}?hl={HL}&gl={GL}&ceid={CEID}",
+    "editions": [
+      { "name": "日本",   "hl": "ja",    "gl": "JP", "ceid": "JP:ja" },
+      { "name": "アメリカ", "hl": "en-US", "gl": "US", "ceid": "US:en" }
+    ],
+    "topics": [
+      { "topic": "TECHNOLOGY",    "sourceTag": "gnews_technology" },
+      { "topic": "BUSINESS",      "sourceTag": "gnews_business" },
+      { "topic": "WORLD",         "sourceTag": "gnews_world" },
+      { "topic": "NATION",        "sourceTag": "gnews_nation" },
+      { "topic": "SCIENCE",       "sourceTag": "gnews_science" },
+      { "topic": "SPORTS",        "sourceTag": "gnews_sports" },
+      { "topic": "ENTERTAINMENT", "sourceTag": "gnews_entertainment" },
+      { "topic": "HEALTH",        "sourceTag": "gnews_health" }
+    ]
+  },
 
-  for (const article of articles) {
-    const category = sourceMapping[article.sourceTag];
+  "googleNewsChina": {
+    "_comment": "中国本土版は不安定なため台湾(繁体字)版のTECHNOLOGYセクションを使用",
+    "url": "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=zh-TW&gl=TW&ceid=TW:zh-Hant",
+    "sourceTag": "gnews_technology"
+  },
 
-    if (category) {
-      // 対応表にヒット → 即確定。どの段階で決まったか記録しておく
-      classified.push({
-        ...article,
-        category,
-        classifiedBy: 'source_map',
-      });
-    } else {
-      // 対応表に無い、または値がnull → 次の段階(AI分類)へ
-      unclassified.push(article);
+  "apis": {
+    "_comment": "APIのcategoryパラメータごとにsourceTagをnewsdata_xxx / gnews_xxxに変換して使う",
+    "newsdata": {
+      "endpoint": "https://newsdata.io/api/1/news",
+      "apiKeyEnv": "NEWSDATA_API_KEY",
+      "categories": ["technology", "business", "politics", "world", "sports", "entertainment", "science", "health", "top"]
     }
   }
-
-  return { classified, unclassified };
 }
-
-module.exports = { classifyBySource };
