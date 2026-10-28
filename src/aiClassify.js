@@ -60,7 +60,7 @@ async function classifyBatchWithGroq(batch) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         temperature: 0,
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }],
