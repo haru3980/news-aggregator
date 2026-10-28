@@ -1,0 +1,23 @@
+-- Supabase(Postgres)のテーブル定義
+-- SupabaseダッシュボードのSQL Editorでそのまま実行してください
+
+create table if not exists articles (
+  id bigint generated always as identity primary key,
+  title text not null,
+  summary text,
+  url text not null unique,         -- 重複排除の要。同じURLは2回保存されない
+  source_tag text not null,         -- 例: "itmedia_aiplus"
+  source_name text,
+  category text not null,           -- 例: "AI", "経済"
+  classified_by text not null,      -- "source_map" または "ai"
+  published_at timestamptz,
+  fetched_at timestamptz not null default now()
+);
+
+-- カテゴリでの絞り込み表示を高速化
+create index if not exists idx_articles_category on articles (category);
+
+-- 新しい記事順での一覧表示を高速化
+create index if not exists idx_articles_published_at on articles (published_at desc);
+
+-- urlが重複した場合は何もしない(INSERTする側はON CONFLICTで対応する)
