@@ -1,0 +1,32 @@
+name: ニュース定期更新
+
+on:
+  schedule:
+    # GitHub ActionsのcronはUTC基準。JSTはUTC+9なので9時間引く
+    - cron: '0 21 * * *'  # JST 6:00
+    - cron: '0 3 * * *'   # JST 12:00
+  workflow_dispatch: {}   # 手動実行もできるようにしておく(テスト用)
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.jsをセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 依存パッケージをインストール
+        run: npm ci
+
+      - name: ニュース取得・分類・保存バッチを実行
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NEWSDATA_API_KEY: ${{ secrets.NEWSDATA_API_KEY }}
+        run: node src/index.js
