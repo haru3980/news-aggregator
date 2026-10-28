@@ -39,32 +39,37 @@ function buildPrompt(batch) {
 }
 
 /**
- * Gemini APIに1バッチ分を投げて分類結果を受け取る
+ * Groq API(OpenAI互換)に1バッチ分を投げて分類結果を受け取る
  * @param {Array} batch - 未確定記事のうち最大BATCH_SIZE件
  */
-async function classifyBatchWithGemini(batch) {
-  const apiKey = process.env.GEMINI_API_KEY;
+async function classifyBatchWithGroq(batch) {
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.error('[aiClassify] GEMINI_API_KEY が未設定です。このバッチは「その他」にフォールバックします。');
+    console.error('[aiClassify] GROQ_API_KEY が未設定です。このバッチは「その他」にフォールバックします。');
     return batch.map(() => 'OTH');
   }
 
   const prompt = buildPrompt(batch);
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+  const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
 
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1000 },
+        model: 'llama-3.1-8b-instant',
+        temperature: 0,
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const text = data.choices?.[0]?.message?.content || '[]';
 
     // ```json のようなコードフェンスが付いて返ることがあるので除去してからパース
     const cleaned = text.replace(/```json|```/g, '').trim();
@@ -94,7 +99,7 @@ async function classifyUnclassified(unclassifiedArticles) {
 
   for (let i = 0; i < unclassifiedArticles.length; i += BATCH_SIZE) {
     const batch = unclassifiedArticles.slice(i, i + BATCH_SIZE);
-    const codes = await classifyBatchWithGemini(batch);
+    const codes = await classifyBatchWithGroq(batch);
 
     batch.forEach((article, idx) => {
       const code = codes[idx] || 'OTH';
