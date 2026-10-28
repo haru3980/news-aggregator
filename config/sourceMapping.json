@@ -1,0 +1,37 @@
+{
+  "_comment": "キー(source_tag)が一致した記事は、このカテゴリに即確定する。値がnullのものはAI分類に回す対象",
+
+  "itmedia_aiplus": "AI",
+  "itmedia_news_bursts": null,
+
+  "pc_watch": "IT・テクノロジー",
+  "car_watch": "自動車",
+  "game_watch": "ゲーム",
+  "internet_watch": "IT・テクノロジー",
+  "impress_watch_general": null,
+
+  "gigazine": "IT・テクノロジー",
+  "gizmodo_jp": "IT・テクノロジー",
+
+  "36kr": "IT・テクノロジー",
+
+  "gnews_technology": "IT・テクノロジー",
+  "gnews_business": "経済",
+  "gnews_world": "国際",
+  "gnews_nation": "社会",
+  "gnews_science": "科学",
+  "gnews_sports": "スポーツ",
+  "gnews_entertainment": "エンタメ",
+  "gnews_health": "科学",
+  "gnews_top": null,
+
+  "newsdata_technology": "IT・テクノロジー",
+  "newsdata_business": "経済",
+  "newsdata_politics": "政治",
+  "newsdata_world": "国際",
+  "newsdata_sports": "スポーツ",
+  "newsdata_entertainment": "エンタメ",
+  "newsdata_science": "科学",
+  "newsdata_health": "科学",
+  "newsdata_top": null
+}
