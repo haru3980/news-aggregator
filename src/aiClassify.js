@@ -4,14 +4,16 @@
 const categoriesData = require('../config/categories.json');
 
 // カテゴリ名 ⇔ 短いコードの対応(出力トークン削減のため、LLMにはコードだけ返させる)
+// 以前は ECO(経済) と ENT(エンタメ) が似すぎていてAIが取り違えやすかったため、
+// 見た目が被らないコードに変更(経済→BIZ, IT→TEC, スポーツ→SPT)
 const CODE_TO_CATEGORY = {
   POL: '政治',
-  ECO: '経済',
-  WOR: '国際',
+  BIZ: '経済',
+  WLD: '国際',
   SOC: '社会',
-  IT: 'IT・テクノロジー',
+  TEC: 'IT・テクノロジー',
   AI: 'AI',
-  SPO: 'スポーツ',
+  SPT: 'スポーツ',
   ENT: 'エンタメ',
   SCI: '科学',
   CAR: '自動車',
@@ -19,29 +21,27 @@ const CODE_TO_CATEGORY = {
   OTH: 'その他',
 };
 
-const BATCH_SIZE = 25; // 1コールあたりの記事数(多いほど指示文コストを割り勘できる)
+const BATCH_SIZE = 25;
 
 function buildPrompt(batch) {
-  // インデント無しの圧縮JSONで送る。キーも1文字(i=id連番, t=title, s=summary)
   const items = batch.map((a, idx) => ({
     i: idx,
     t: a.title.slice(0, 60),
     s: a.summary.slice(0, 60),
   }));
 
-  const codeList = Object.keys(CODE_TO_CATEGORY).join(',');
+  // コードだけだと意味を誤解されやすいため、「コード=カテゴリ名」の形で明示する
+  const codeList = Object.entries(CODE_TO_CATEGORY)
+    .map(([code, name]) => `${code}=${name}`)
+    .join(',');
 
   return (
-    `カテゴリコード:${codeList}\n` +
-    `各記事を1つのコードに分類し、JSON配列のみ返答(説明文不要):[{"i":連番,"c":"コード"}]\n` +
+    `カテゴリコード(コード=意味):${codeList}\n` +
+    `各記事を最も当てはまる1つのコードに分類し、JSON配列のみ返答(説明文不要):[{"i":連番,"c":"コード"}]\n` +
     JSON.stringify(items)
   );
 }
 
-/**
- * Groq API(OpenAI互換)に1バッチ分を投げて分類結果を受け取る
- * @param {Array} batch - 未確定記事のうち最大BATCH_SIZE件
- */
 async function classifyBatchWithGroq(batch) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -71,11 +71,9 @@ async function classifyBatchWithGroq(batch) {
     const data = await res.json();
     const text = data.choices?.[0]?.message?.content || '[]';
 
-    // ```json のようなコードフェンスが付いて返ることがあるので除去してからパース
     const cleaned = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(cleaned);
 
-    // 結果をi(連番)順に並べたコード配列に変換。欠けていた分は'OTH'で埋める
     const codes = new Array(batch.length).fill('OTH');
     for (const item of parsed) {
       if (typeof item.i === 'number' && item.i < batch.length) {
@@ -89,11 +87,6 @@ async function classifyBatchWithGroq(batch) {
   }
 }
 
-/**
- * 未確定記事を全てAI分類する(BATCH_SIZEごとに分割して呼び出し)
- * @param {Array} unclassifiedArticles
- * @returns {Promise<Array>} categoryが付与された記事配列
- */
 async function classifyUnclassified(unclassifiedArticles) {
   const results = [];
 
