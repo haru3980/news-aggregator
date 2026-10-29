@@ -1,0 +1,49 @@
+/* 実在の日本語ニュースサイト(Yahoo!ニュース等)に合わせ、Webフォントは読み込まずOS標準の和文ゴシックを使う */
+:root {
+  --bg: #f2f3f5;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-sub: #6b6d72;
+  --line: #e3e5e8;
+  --line-strong: #c9ccd1;
+  --accent: #b7282e; /* 見出しリンクや選択中タブに使う日本のニュースサイトでよくある赤 */
+  --hover-bg: #f5f6f8;
+  --focus: #2b5c96;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic Medium",
+    "Yu Gothic", Meiryo, "MS PGothic", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
