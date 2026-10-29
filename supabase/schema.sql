@@ -9,6 +9,8 @@ create table if not exists articles (
   source_tag text not null,         -- 例: "itmedia_aiplus"
   source_name text,
   category text not null,           -- 例: "AI", "経済"
+  country text,                     -- "JP" / "US" / "CN"
+  image_url text,                   -- サムネイル画像(無い場合はnull)
   classified_by text not null,      -- "source_map" または "ai"
   published_at timestamptz,
   fetched_at timestamptz not null default now()
@@ -16,6 +18,7 @@ create table if not exists articles (
 
 -- カテゴリでの絞り込み表示を高速化
 create index if not exists idx_articles_category on articles (category);
+create index if not exists idx_articles_country on articles (country);
 
 -- 新しい記事順での一覧表示を高速化
 create index if not exists idx_articles_published_at on articles (published_at desc);
