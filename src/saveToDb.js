@@ -4,13 +4,23 @@
 const { createClient } = require('@supabase/supabase-js');
 
 function getClient() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY;
+  // 前後の空白・改行はコピペ時に紛れ込みやすいので、必ず除去する
+  const url = (process.env.SUPABASE_URL || '').trim();
+  const key = (process.env.SUPABASE_SERVICE_KEY || '').trim();
 
   if (!url || !key) {
     throw new Error('SUPABASE_URL または SUPABASE_SERVICE_KEY が環境変数に設定されていません');
   }
 
+  // よくあるミス: Project URLではなくProject ID(xxxxx.supabase.co が無い)を入れてしまっている
+  if (!url.startsWith('https://') || !url.includes('.supabase.co')) {
+    throw new Error(
+      `SUPABASE_URLの形式が不正です(現在の値の先頭: "${url.slice(0, 15)}..."）。` +
+      `"https://xxxxx.supabase.co" の形式になっているか確認してください(Project IDだけを入れていないか要確認)。`
+    );
+  }
+
+  console.log(`[saveToDb] Supabase接続先: ${url}`);
   return createClient(url, key);
 }
 
@@ -32,7 +42,6 @@ function chunkArray(arr, size) {
  * @param {Array} articles - category / classifiedBy が付与済みの記事配列
  */
 async function saveArticles(articles) {
-  // url が無い記事はDBのunique制約(url)に違反するため、事前に除外する
   const validArticles = articles.filter((a) => a.url);
   const skipped = articles.length - validArticles.length;
   if (skipped > 0) {
@@ -46,7 +55,6 @@ async function saveArticles(articles) {
 
   const supabase = getClient();
 
-  // DBのカラム名(スネークケース)に合わせて変換
   const rows = validArticles.map((a) => ({
     title: a.title,
     summary: a.summary,
@@ -70,7 +78,6 @@ async function saveArticles(articles) {
       .upsert(chunk, { onConflict: 'url', ignoreDuplicates: true });
 
     if (error) {
-      // error.message だけでなく、原因特定に必要な情報を全部出す
       console.error(`[saveToDb] チャンク${i + 1}で保存エラー発生:`);
       console.error('  message:', error.message);
       console.error('  code:', error.code);
