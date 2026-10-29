@@ -12,6 +12,7 @@ function getClient() {
     throw new Error('SUPABASE_URL または SUPABASE_SERVICE_KEY が環境変数に設定されていません');
   }
 
+  // よくあるミス: Project URLではなくProject ID(xxxxx.supabase.co が無い)を入れてしまっている
   if (!url.startsWith('https://') || !url.includes('.supabase.co')) {
     throw new Error(
       `SUPABASE_URLの形式が不正です(現在の値の先頭: "${url.slice(0, 15)}..."）。` +
@@ -23,8 +24,11 @@ function getClient() {
   return createClient(url, key);
 }
 
-const CHUNK_SIZE = 200;
+const CHUNK_SIZE = 200; // 1回のリクエストで送る件数の上限(ペイロード超過・タイムアウト対策)
 
+/**
+ * 配列をCHUNK_SIZEごとに分割する
+ */
 function chunkArray(arr, size) {
   const chunks = [];
   for (let i = 0; i < arr.length; i += size) {
@@ -33,7 +37,12 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
+/**
+ * 記事配列をarticlesテーブルに保存する(CHUNK_SIZEごとに分割送信)
+ * @param {Array} articles - category / classifiedBy が付与済みの記事配列
+ */
 async function saveArticles(articles) {
+  // url が無い記事はDBのunique制約(url)に違反するため、事前に除外する
   const validArticles = articles.filter((a) => a.url);
   const skipped = articles.length - validArticles.length;
   if (skipped > 0) {
@@ -47,6 +56,7 @@ async function saveArticles(articles) {
 
   const supabase = getClient();
 
+  // DBのカラム名(スネークケース)に合わせて変換
   const rows = validArticles.map((a) => ({
     title: a.title,
     summary: a.summary,
@@ -55,6 +65,7 @@ async function saveArticles(articles) {
     source_name: a.sourceName,
     category: a.category,
     country: a.country || null,
+    image_url: a.imageUrl || null,
     classified_by: a.classifiedBy,
     published_at: a.publishedAt || null,
   }));
@@ -72,6 +83,7 @@ async function saveArticles(articles) {
       .upsert(chunk, { onConflict: 'url' });
 
     if (error) {
+      // error.message だけでなく、原因特定に必要な情報を全部出す
       console.error(`[saveToDb] チャンク${i + 1}で保存エラー発生:`);
       console.error('  message:', error.message);
       console.error('  code:', error.code);
