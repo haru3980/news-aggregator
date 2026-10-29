@@ -29,6 +29,7 @@ async function fetchNewsDataCategory(category, apiConfig) {
       url: item.link,
       sourceTag: `newsdata_${category}`,
       sourceName: `NewsData.io (${category})`,
+      country: 'JP', // language=ja指定のため日本向けニュースとして扱う
       publishedAt: item.pubDate || null,
     }));
   } catch (err) {
