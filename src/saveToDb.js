@@ -12,7 +12,6 @@ function getClient() {
     throw new Error('SUPABASE_URL または SUPABASE_SERVICE_KEY が環境変数に設定されていません');
   }
 
-  // よくあるミス: Project URLではなくProject ID(xxxxx.supabase.co が無い)を入れてしまっている
   if (!url.startsWith('https://') || !url.includes('.supabase.co')) {
     throw new Error(
       `SUPABASE_URLの形式が不正です(現在の値の先頭: "${url.slice(0, 15)}..."）。` +
@@ -24,11 +23,8 @@ function getClient() {
   return createClient(url, key);
 }
 
-const CHUNK_SIZE = 200; // 1回のリクエストで送る件数の上限(ペイロード超過・タイムアウト対策)
+const CHUNK_SIZE = 200;
 
-/**
- * 配列をCHUNK_SIZEごとに分割する
- */
 function chunkArray(arr, size) {
   const chunks = [];
   for (let i = 0; i < arr.length; i += size) {
@@ -37,10 +33,6 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
-/**
- * 記事配列をarticlesテーブルに保存する(CHUNK_SIZEごとに分割送信)
- * @param {Array} articles - category / classifiedBy が付与済みの記事配列
- */
 async function saveArticles(articles) {
   const validArticles = articles.filter((a) => a.url);
   const skipped = articles.length - validArticles.length;
@@ -62,6 +54,7 @@ async function saveArticles(articles) {
     source_tag: a.sourceTag,
     source_name: a.sourceName,
     category: a.category,
+    country: a.country || null,
     classified_by: a.classifiedBy,
     published_at: a.publishedAt || null,
   }));
@@ -73,9 +66,10 @@ async function saveArticles(articles) {
     const chunk = chunks[i];
     console.log(`[saveToDb] チャンク ${i + 1}/${chunks.length}(${chunk.length}件)を保存中...`);
 
+    // ignoreDuplicates を外し、既存URLでも新しい情報(country等)で上書きする
     const { error } = await supabase
       .from('articles')
-      .upsert(chunk, { onConflict: 'url', ignoreDuplicates: true });
+      .upsert(chunk, { onConflict: 'url' });
 
     if (error) {
       console.error(`[saveToDb] チャンク${i + 1}で保存エラー発生:`);
