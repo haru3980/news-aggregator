@@ -2,23 +2,23 @@
   "_comment": "取得元ごとの設定。sourceTagがsourceMapping.jsonのキーと一致している必要がある",
 
   "rss": [
-    { "sourceTag": "itmedia_aiplus",       "name": "ITmedia AI+",        "url": "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml" },
-    { "sourceTag": "itmedia_news_bursts",  "name": "ITmedia NEWS速報",    "url": "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml" },
-    { "sourceTag": "pc_watch",             "name": "PC Watch",            "url": "https://pc.watch.impress.co.jp/data/rss/1.0/pcw/feed.rdf" },
-    { "sourceTag": "car_watch",            "name": "Car Watch",           "url": "https://car.watch.impress.co.jp/data/rss/1.0/car/feed.rdf" },
-    { "sourceTag": "game_watch",           "name": "GAME Watch",          "url": "https://game.watch.impress.co.jp/data/rss/1.0/gmw/feed.rdf" },
-    { "sourceTag": "internet_watch",       "name": "INTERNET Watch",      "url": "https://internet.watch.impress.co.jp/data/rss/1.0/iw/feed.rdf" },
-    { "sourceTag": "gigazine",             "name": "GIGAZINE",            "url": "https://gigazine.net/news/rss_2.0/" },
-    { "sourceTag": "gizmodo_jp",           "name": "ギズモード・ジャパン", "url": "https://www.gizmodo.jp/feed/index.xml" },
-    { "sourceTag": "36kr",                 "name": "36氪",                "url": "https://36kr.com/feed" }
+    { "sourceTag": "itmedia_aiplus",       "name": "ITmedia AI+",        "url": "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",       "country": "JP" },
+    { "sourceTag": "itmedia_news_bursts",  "name": "ITmedia NEWS速報",    "url": "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml",  "country": "JP" },
+    { "sourceTag": "pc_watch",             "name": "PC Watch",            "url": "https://pc.watch.impress.co.jp/data/rss/1.0/pcw/feed.rdf",      "country": "JP" },
+    { "sourceTag": "car_watch",            "name": "Car Watch",           "url": "https://car.watch.impress.co.jp/data/rss/1.0/car/feed.rdf",     "country": "JP" },
+    { "sourceTag": "game_watch",           "name": "GAME Watch",          "url": "https://game.watch.impress.co.jp/data/rss/1.0/gmw/feed.rdf",    "country": "JP" },
+    { "sourceTag": "internet_watch",       "name": "INTERNET Watch",      "url": "https://internet.watch.impress.co.jp/data/rss/1.0/iw/feed.rdf", "country": "JP" },
+    { "sourceTag": "gigazine",             "name": "GIGAZINE",            "url": "https://gigazine.net/news/rss_2.0/",   "country": "JP" },
+    { "sourceTag": "gizmodo_jp",           "name": "ギズモード・ジャパン", "url": "https://www.gizmodo.jp/feed/index.xml", "country": "JP" },
+    { "sourceTag": "36kr",                 "name": "36氪",                "url": "https://36kr.com/feed",                 "country": "CN" }
   ],
 
   "googleNewsSections": {
     "_comment": "hl/gl/ceidを変えることで国・言語別に取得。sectionTopicがsourceMapping.jsonの gnews_xxx に対応",
     "baseUrl": "https://news.google.com/rss/headlines/section/topic/{TOPIC}?hl={HL}&gl={GL}&ceid={CEID}",
     "editions": [
-      { "name": "日本",   "hl": "ja",    "gl": "JP", "ceid": "JP:ja" },
-      { "name": "アメリカ", "hl": "en-US", "gl": "US", "ceid": "US:en" }
+      { "name": "日本",   "hl": "ja",    "gl": "JP", "ceid": "JP:ja", "country": "JP" },
+      { "name": "アメリカ", "hl": "en-US", "gl": "US", "ceid": "US:en", "country": "US" }
     ],
     "topics": [
       { "topic": "TECHNOLOGY",    "sourceTag": "gnews_technology" },
@@ -35,7 +35,8 @@
   "googleNewsChina": {
     "_comment": "中国本土版は不安定なため台湾(繁体字)版のTECHNOLOGYセクションを使用",
     "url": "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=zh-TW&gl=TW&ceid=TW:zh-Hant",
-    "sourceTag": "gnews_technology"
+    "sourceTag": "gnews_technology",
+    "country": "CN"
   },
 
   "apis": {
