@@ -27,11 +27,11 @@ async function fetchGoogleNewsSections(googleNewsConfig) {
       const url = buildUrl(googleNewsConfig.baseUrl, topicConfig.topic, edition);
       tasks.push(
         fetchOneRss({
-          // 国ごとに同じトピックでも別記事なので、sourceTagに国名を混ぜて区別してもよいが
-          // カテゴリ分類上は同じ扱いでよいため、sourceMapping.jsonのキーはそのまま使う
+          // カテゴリ分類はsourceTagで共通に扱うが、countryで国別に区別できるようにする
           sourceTag: topicConfig.sourceTag,
           name: `GoogleNews-${edition.name}-${topicConfig.topic}`,
           url,
+          country: edition.country,
         })
       );
     }
@@ -50,6 +50,7 @@ async function fetchGoogleNewsChina(chinaConfig) {
     sourceTag: chinaConfig.sourceTag,
     name: 'GoogleNews-China-Tech',
     url: chinaConfig.url,
+    country: chinaConfig.country,
   });
 }
 
