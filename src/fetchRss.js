@@ -22,6 +22,7 @@ async function fetchOneRss(source) {
       url: item.link,
       sourceTag: source.sourceTag,
       sourceName: source.name,
+      country: source.country || null,
       publishedAt: item.isoDate || item.pubDate || null,
     }));
   } catch (err) {
