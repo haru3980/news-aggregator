@@ -1,23 +1,34 @@
--- Supabase(Postgres)のテーブル定義
--- SupabaseダッシュボードのSQL Editorでそのまま実行してください　
+// ソース固定マッピングによる一次分類
+// 対応表にあれば即カテゴリ確定、無ければ「未確定」としてAI分類に回す
 
-create table if not exists articles (
-  id bigint generated always as identity primary key,
-  title text not null,
-  summary text,
-  url text not null unique,         -- 重複排除の要。同じURLは2回保存されない
-  source_tag text not null,         -- 例: "itmedia_aiplus"
-  source_name text,
-  category text not null,           -- 例: "AI", "経済"
-  classified_by text not null,      -- "source_map" または "ai"
-  published_at timestamptz,
-  fetched_at timestamptz not null default now()
-);
+const sourceMapping = require('../config/sourceMapping.json');
 
--- カテゴリでの絞り込み表示を高速化
-create index if not exists idx_articles_category on articles (category);
+/**
+ * 記事配列を「確定済み」と「未確定(AI分類が必要)」に振り分ける
+ * @param {Array} articles - [{ id, title, summary, url, sourceTag, publishedAt }]
+ * @returns {{ classified: Array, unclassified: Array }}
+ */
+function classifyBySource(articles) {
+  const classified = [];
+  const unclassified = [];
 
--- 新しい記事順での一覧表示を高速化
-create index if not exists idx_articles_published_at on articles (published_at desc);
+  for (const article of articles) {
+    const category = sourceMapping[article.sourceTag];
 
--- urlが重複した場合は何もしない(INSERTする側はON CONFLICTで対応する)
+    if (category) {
+      // 対応表にヒット → 即確定。どの段階で決まったか記録しておく
+      classified.push({
+        ...article,
+        category,
+        classifiedBy: 'source_map',
+      });
+    } else {
+      // 対応表に無い、または値がnull → 次の段階(AI分類)へ
+      unclassified.push(article);
+    }
+  }
+
+  return { classified, unclassified };
+}
+
+module.exports = { classifyBySource };
