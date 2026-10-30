@@ -1,45 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+// NewsData.io(無料枠・商用利用可)からカテゴリ別に記事を取得する
 
-:root {
-  --board-bg: #0e1013;
-  --tile-bg: #1a1d22;
-  --tile-bg-alt: #1d2025;
-  --flap-text: #f3efe4;
-  --muted: #8b8d92;
-  --amber: #e8a33d;
-  --line: rgba(243, 239, 228, 0.08);
-  --focus: #e8a33d;
+/**
+ * NewsData.ioの1カテゴリ分を取得する
+ * @param {string} category - "technology" など(sources.jsonのcategories配列の値)
+ * @param {object} apiConfig - sources.json の apis.newsdata
+ */
+async function fetchNewsDataCategory(category, apiConfig) {
+  const apiKey = process.env[apiConfig.apiKeyEnv];
 
-  --jp: #d1495b;
-  --us: #3d6fb4;
-  --cn: #d1a72b;
-}
+  if (!apiKey) {
+    console.error(`[fetchApi] ${apiConfig.apiKeyEnv} が環境変数に設定されていません。このカテゴリはスキップします。`);
+    return [];
+  }
 
-* {
-  box-sizing: border-box;
-}
+  const url = `${apiConfig.endpoint}?apikey=${apiKey}&language=ja&category=${category}`;
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--board-bg);
-  color: var(--flap-text);
-  font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
-}
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
 
-button {
-  font-family: inherit;
-}
-
-:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
+    return (data.results || []).map((item) => ({
+      id: item.link,
+      title: (item.title || '').trim(),
+      summary: (item.description || '').trim().slice(0, 100),
+      url: item.link,
+      sourceTag: `newsdata_${category}`,
+      sourceName: `NewsData.io (${category})`,
+      country: 'JP', // language=ja指定のため日本向けニュースとして扱う
+      imageUrl: item.image_url || null,
+      publishedAt: item.pubDate || null,
+    }));
+  } catch (err) {
+    console.error(`[fetchApi] NewsData.io取得失敗 (${category}): ${err.message}`);
+    return [];
   }
 }
+
+/**
+ * 設定されている全カテゴリをまとめて取得する
+ * @param {object} apiConfig - sources.json の apis.newsdata
+ */
+async function fetchAllNewsData(apiConfig) {
+  const results = await Promise.allSettled(
+    apiConfig.categories.map((cat) => fetchNewsDataCategory(cat, apiConfig))
+  );
+  return results.filter((r) => r.status === 'fulfilled').flatMap((r) => r.value);
+}
+
+module.exports = { fetchNewsDataCategory, fetchAllNewsData };
